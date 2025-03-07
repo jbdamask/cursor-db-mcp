@@ -1,3 +1,5 @@
+# Note - this is currently just a web service. It is NOT an MCP server yet
+
 # Cursor Database MCP (Management Control Panel)
 
 A lightweight API server for accessing and querying Cursor IDE's SQLite databases. This tool allows you to retrieve chat and composer data from Cursor projects without directly interacting with the underlying SQLite databases.

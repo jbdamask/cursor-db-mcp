@@ -3,19 +3,33 @@ import json
 import sqlite3
 import platform
 import re
-from flask import Flask, request, jsonify
 from pathlib import Path
 import argparse
 import logging
+from typing import Dict, List, Optional, Any, Union, AsyncIterator
+from contextlib import asynccontextmanager
+import sys
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(os.path.join(os.path.dirname(os.path.abspath(__file__)), "mcp-server.log")),
+        logging.StreamHandler()
+    ]
 )
 logger = logging.getLogger('cursor-mcp')
 
-app = Flask(__name__)
+# Import MCP libraries
+try:
+    from mcp.server.fastmcp import FastMCP, Context
+except ImportError as e:
+    logger.error(f"Failed to import MCP libraries: {str(e)}. Make sure they are installed.")
+    sys.exit(1)
+
+# Global DB manager instance
+db_manager = None
 
 class CursorDBManager:
     def __init__(self, cursor_path=None, project_dirs=None):
@@ -147,13 +161,13 @@ class CursorDBManager:
             else:
                 logger.warning(f"No state.vscdb found in {project_path}")
         
-    def add_project_dir(self, project_dir):
-        """Add a new project directory to the manager"""
-        project_path = Path(project_dir).expanduser().resolve()
-        if project_path not in self.project_dirs:
-            self.project_dirs.append(project_path)
-            self.refresh_db_paths()
-        return len(self.db_paths)
+    # def add_project_dir(self, project_dir):
+    #     """Add a new project directory to the manager"""
+    #     project_path = Path(project_dir).expanduser().resolve()
+    #     if project_path not in self.project_dirs:
+    #         self.project_dirs.append(project_path)
+    #         self.refresh_db_paths()
+    #     return len(self.db_paths)
     
     def list_projects(self, detailed=False):
         """
@@ -329,99 +343,176 @@ class CursorDBManager:
             logger.error(f"SQLite error: {e}")
             raise
 
-# Initialize the DB manager (will be configured in main())
-
-@app.route('/projects', methods=['GET'])
-def list_projects():
-    """List all available projects and their database paths"""
-    detailed = request.args.get('detailed', 'false').lower() == 'true'
-    return jsonify(db_manager.list_projects(detailed))
-
-@app.route('/projects/<project_name>/chat', methods=['GET'])
-def get_project_chat(project_name):
-    """Retrieve AI chat data from a project"""
+# Create an MCP server with lifespan support
+@asynccontextmanager
+async def app_lifespan(app: FastMCP) -> AsyncIterator[Dict[str, Any]]:
+    """Manage application lifecycle with context"""
     try:
-        chat_data = db_manager.get_chat_data(project_name)
-        return jsonify(chat_data)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-    except Exception as e:
-        return jsonify({"error": f"Error retrieving chat data: {str(e)}"}), 500
+        # Initialize the DB manager on startup
+        global db_manager
+        db_manager = CursorDBManager()
+        
+        # Parse command line arguments
+        parser = argparse.ArgumentParser(description='Cursor IDE SQLite Database MCP Server')
+        parser.add_argument('--cursor-path', help='Path to Cursor User directory (e.g. ~/Library/Application Support/Cursor/User/)')
+        parser.add_argument('--project-dirs', nargs='+', help='List of additional Cursor project directories to scan')
+        
+        # Parse known args only, to avoid conflicts with MCP's own args
+        args, _ = parser.parse_known_args()
+        
+        # Configure the DB manager with the Cursor path
+        if args.cursor_path:
+            db_manager.cursor_path = Path(args.cursor_path).expanduser().resolve()
+        
+        # Add explicitly specified project directories
+        if args.project_dirs:
+            for project_dir in args.project_dirs:
+                db_manager.add_project_dir(project_dir)
+        
+        # Log detected Cursor path
+        if db_manager.cursor_path:
+            logger.info(f"Using Cursor path: {db_manager.cursor_path}")
+        else:
+            logger.warning("No Cursor path specified or detected")
+        
+        logger.info(f"Available projects: {list(db_manager.list_projects().keys())}")
+        
+        # Yield empty context - we're using global db_manager instead
+        yield {}
+    finally:
+        # Cleanup on shutdown (if needed)
+        logger.info("Shutting down Cursor DB MCP server")
 
-@app.route('/projects/<project_name>/composers', methods=['GET'])
-def get_project_composers(project_name):
-    """Retrieve composer IDs from a project"""
+# Create the MCP server with lifespan
+mcp = FastMCP("Cursor DB Manager", lifespan=app_lifespan)
+
+# MCP Resources
+@mcp.resource("cursor://projects")
+def list_all_projects() -> Dict[str, str]:
+    """List all available Cursor projects and their database paths"""
+    global db_manager
+    return db_manager.list_projects(detailed=False)
+
+@mcp.resource("cursor://projects/detailed")
+def list_detailed_projects() -> Dict[str, Dict[str, Any]]:
+    """List all available Cursor projects with detailed information"""
+    global db_manager
+    return db_manager.list_projects(detailed=True)
+
+@mcp.resource("cursor://projects/{project_name}/chat")
+def get_project_chat_data(project_name: str) -> Dict[str, Any]:
+    """Retrieve AI chat data from a specific Cursor project"""
+    global db_manager
     try:
-        composer_data = db_manager.get_composer_ids(project_name)
-        return jsonify(composer_data)
+        return db_manager.get_chat_data(project_name)
     except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+        return {"error": str(e)}
     except Exception as e:
-        return jsonify({"error": f"Error retrieving composer data: {str(e)}"}), 500
+        return {"error": f"Error retrieving chat data: {str(e)}"}
 
-@app.route('/composers/<composer_id>', methods=['GET'])
-def get_composer_data(composer_id):
+@mcp.resource("cursor://projects/{project_name}/composers")
+def get_project_composer_ids(project_name: str) -> Dict[str, Any]:
+    """Retrieve composer IDs from a specific Cursor project"""
+    global db_manager
+    try:
+        return db_manager.get_composer_ids(project_name)
+    except ValueError as e:
+        return {"error": str(e)}
+    except Exception as e:
+        return {"error": f"Error retrieving composer data: {str(e)}"}
+
+@mcp.resource("cursor://composers/{composer_id}")
+def get_composer_data_resource(composer_id: str) -> Dict[str, Any]:
     """Retrieve composer data from global storage"""
+    global db_manager
     try:
-        composer_data = db_manager.get_composer_data(composer_id)
-        return jsonify(composer_data)
+        return db_manager.get_composer_data(composer_id)
     except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+        return {"error": str(e)}
     except Exception as e:
-        return jsonify({"error": f"Error retrieving composer data: {str(e)}"}), 500
+        return {"error": f"Error retrieving composer data: {str(e)}"}
 
-@app.route('/projects/<project_name>/tables/<table_name>', methods=['GET'])
-def query_table(project_name, table_name):
-    """Query a specific table in a project's database"""
-    query_type = request.args.get('query_type', 'get_all')
-    key = request.args.get('key')
-    limit = int(request.args.get('limit', 100))
+# MCP Tools
+@mcp.tool()
+def query_table(project_name: str, table_name: str, query_type: str, key: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
+    """
+    Query a specific table in a project's database
     
+    Args:
+        project_name: Name of the project
+        table_name: Either 'ItemTable' or 'cursorDiskKV'
+        query_type: Type of query ('get_all', 'get_by_key', 'search_keys')
+        key: Key to search for when using 'get_by_key' or 'search_keys'
+        limit: Maximum number of results to return
+    
+    Returns:
+        List of query results
+    """
+    global db_manager
     try:
-        results = db_manager.execute_query(project_name, table_name, query_type, key, limit)
-        return jsonify(results)
+        return db_manager.execute_query(project_name, table_name, query_type, key, limit)
     except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+        return [{"error": str(e)}]
     except sqlite3.Error as e:
-        return jsonify({"error": f"Database error: {str(e)}"}), 500
+        return [{"error": f"Database error: {str(e)}"}]
 
-@app.route('/refresh', methods=['GET'])
-def refresh_databases():
+@mcp.tool()
+def refresh_databases() -> Dict[str, Any]:
     """Refresh the list of database paths"""
+    global db_manager
     db_manager.refresh_db_paths()
-    return jsonify({
+    return {
         "message": "Database paths refreshed",
         "projects": db_manager.list_projects()
-    })
+    }
 
-def main():
-    parser = argparse.ArgumentParser(description='Cursor IDE SQLite Database Query Server')
-    parser.add_argument('--host', default='127.0.0.1', help='Host to run the server on')
-    parser.add_argument('--port', type=int, default=5000, help='Port to run the server on')
-    parser.add_argument('--cursor-path', help='Path to Cursor User directory (e.g. ~/Library/Application Support/Cursor/User/)')
-    parser.add_argument('--project-dirs', nargs='+', help='List of additional Cursor project directories to scan')
+# @mcp.tool()
+# def add_project_directory(project_dir: str) -> Dict[str, Any]:
+#     """
+#     Add a new project directory to the manager
     
-    args = parser.parse_args()
+#     Args:
+#         project_dir: Path to the project directory
     
-    # Initialize the DB manager with the Cursor path
-    global db_manager
-    db_manager = CursorDBManager(cursor_path=args.cursor_path)
-    
-    # Add explicitly specified project directories
-    if args.project_dirs:
-        for project_dir in args.project_dirs:
-            db_manager.add_project_dir(project_dir)
-    
-    # Log detected Cursor path
-    if db_manager.cursor_path:
-        logger.info(f"Using Cursor path: {db_manager.cursor_path}")
-    else:
-        logger.warning("No Cursor path specified or detected")
-    
-    logger.info(f"Starting server on {args.host}:{args.port}")
-    logger.info(f"Available projects: {list(db_manager.list_projects().keys())}")
-    
-    app.run(host=args.host, port=args.port, debug=True)
+#     Returns:
+#         Result of the operation
+#     """
+#     global db_manager
+#     try:
+#         count = db_manager.add_project_dir(project_dir)
+#         return {
+#             "message": f"Project directory added. Total projects: {count}",
+#             "projects": db_manager.list_projects()
+#         }
+#     except Exception as e:
+#         return {"error": f"Error adding project directory: {str(e)}"}
 
-if __name__ == "__main__":
-    main()
+# MCP Prompts
+@mcp.prompt()
+def explore_cursor_projects() -> str:
+    """Create a prompt to explore Cursor projects"""
+    return """
+    I can help you explore your Cursor projects and their data. 
+    
+    Here are some things I can do:
+    1. List all your Cursor projects
+    2. Show AI chat history from a project
+    3. Find composer data
+    4. Query specific tables in the Cursor database
+    
+    What would you like to explore?
+    """
+
+@mcp.prompt()
+def analyze_chat_data(project_name: str) -> str:
+    """Create a prompt to analyze chat data from a specific project"""
+    return f"""
+    I'll analyze the AI chat data from your '{project_name}' project.
+    
+    I can help you understand:
+    - The conversation history
+    - Code snippets shared in the chat
+    - Common themes or questions
+    
+    Would you like me to focus on any specific aspect of the chat data?
+    """

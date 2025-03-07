@@ -44,3 +44,6 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo 
+
+# Project test results
+test-results.txt

@@ -1,272 +1,222 @@
-# Note - this is currently just a web service. It is NOT an MCP server yet
+# Cursor DB MCP Server
 
-# Cursor Database MCP (Management Control Panel)
+A Model Context Protocol (MCP) server for accessing Cursor IDE's SQLite databases. This server allows AI assistants to explore and interact with Cursor's project data, chat history, and composer information.
 
-A lightweight API server for accessing and querying Cursor IDE's SQLite databases. This tool allows you to retrieve chat and composer data from Cursor projects without directly interacting with the underlying SQLite databases.
+## Features
 
-## Overview
-
-Cursor IDE stores various data in SQLite databases located in the user's application support directory. This includes:
-
-- **Project-specific data**: Stored in `workspaceStorage/<workspace-id>/state.vscdb`
-- **Global data**: Stored in `globalStorage/state.vscdb`
-
-This tool provides a simple REST API to access this data, making it easier to retrieve and analyze your Cursor IDE usage, including AI chat conversations and composer sessions.
+- List all Cursor projects
+- Access AI chat history from projects
+- Retrieve composer data
+- Query specific tables in Cursor's SQLite databases
+- Add custom project directories
+- Lifespan context management for efficient resource handling
 
 ## Installation
 
-1. Clone this repository:
-   ```
-   git clone https://github.com/yourusername/cursor-db-mcp.git
-   cd cursor-db-mcp
-   ```
+### Easy Installation
 
-2. Install dependencies:
-   ```
-   pip install flask
-   ```
+Use the provided installation script to install all dependencies:
+
+```bash
+python install.py
+```
+
+This script will install:
+- Basic MCP server dependencies
+- MCP CLI tools for testing and inspection
+
+### Manual Installation
+
+1. Clone this repository:
+```bash
+git clone https://github.com/yourusername/cursor-db-mcp.git
+cd cursor-db-mcp
+```
+
+2. Install basic dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Install MCP CLI tools (optional, for testing):
+```bash
+pip install 'mcp[cli]'  # Note the quotes around mcp[cli]
+```
+
+If the above command fails, you can install the CLI dependencies directly:
+```bash
+pip install typer rich
+```
 
 ## Usage
 
-### Starting the Server
+### Running the Server
 
 ```bash
-python cursor-data-mcp-server.py [options]
+python cursor-db-mcp-server.py
 ```
 
-Options:
-- `--host`: Host to run the server on (default: 127.0.0.1)
-- `--port`: Port to run the server on (default: 5000)
-- `--cursor-path`: Path to Cursor User directory (e.g., ~/Library/Application Support/Cursor/User/)
+Optional arguments:
+- `--cursor-path`: Path to Cursor User directory (e.g. ~/Library/Application Support/Cursor/User/)
 - `--project-dirs`: List of additional Cursor project directories to scan
 
-If `--cursor-path` is not specified, the server will attempt to detect the default Cursor path based on your operating system:
-- macOS: `~/Library/Application Support/Cursor/User`
-- Windows: `~/AppData/Roaming/Cursor/User`
-- Linux: `~/.config/Cursor/User`
-
-### API Endpoints
-
-#### List All Projects
-
-```
-GET /projects
-```
-
-Returns a list of all detected Cursor projects and their database paths.
-
-Example request:
+Example:
 ```bash
-curl http://localhost:5000/projects
+python cursor-db-mcp-server.py --cursor-path ~/Library/Application\ Support/Cursor/User/ --project-dirs ~/code/project1 ~/code/project2
 ```
 
-Example response:
-```json
-{
-  "cursor-chat-browser": "/Users/username/Library/Application Support/Cursor/User/workspaceStorage/abc123/state.vscdb",
-  "cursor-db-mcp": "/Users/username/Library/Application Support/Cursor/User/workspaceStorage/def456/state.vscdb"
-}
-```
+### Testing the Server
 
-For more detailed information, use the `detailed` query parameter:
+You can run the included test script to verify that the MCP server is working correctly:
 
 ```bash
-curl http://localhost:5000/projects?detailed=true
+python test_mcp_server.py
 ```
 
-#### Retrieve Chat Data from a Project
+This script will:
+1. Start the MCP server
+2. Check if MCP CLI tools are available
+3. If available, test listing resources, tools, and prompts
+4. If not available, perform basic server tests
+5. Shut down the server
 
-```
-GET /projects/<project_name>/chat
-```
+### Using with Claude Desktop
 
-Retrieves all AI chat data from a specific project.
-
-Example request:
+1. Install the MCP server in Claude Desktop:
 ```bash
-curl http://localhost:5000/projects/cursor-chat-browser/chat
+mcp install cursor-db-mcp-server.py
 ```
 
-Example response:
-```json
-{
-  "tabs": [
-    {
-      "tabId": "636eac61-69dc-4b77-ae64-26cfa7d557fd",
-      "chatTitle": "Understanding the 'asChild' Prop in Button Component",
-      "bubbles": [
-        {
-          "selections": [...],
-          "text": "What does the asChild prop do in this Button component?",
-          "type": 1
-        },
-        {
-          "text": "The `asChild` prop in the Button component...",
-          "type": 2
-        }
+2. In Claude Desktop, you can now access your Cursor data by asking questions like:
+   - "Show me a list of my Cursor projects"
+   - "What's in my chat history for project X?"
+   - "Find composer data for composer ID Y"
+
+   See detailed examples below
+
+Note: If Claude shows an error connecting to this MCP it's likely because it can't find uv. To fix this, change the command value to include the fully qualified path to uv. For example:
+```
+    "Cursor DB Manager": {
+      "command": "/Users/johndamask/.local/bin/uv",
+      "args": [
+        "run",
+        "--with",
+        "mcp[cli]",
+        "mcp",
+        "run",
+        "/Users/johndamask/code/cursor-db-mcp/cursor-db-mcp-server.py"
       ]
     }
-  ]
-}
 ```
 
-#### Retrieve Composer IDs from a Project
+## Available Resources
 
+- `cursor://projects` - List all available Cursor projects
+- `cursor://projects/detailed` - List projects with detailed information
+- `cursor://projects/{project_name}/chat` - Get chat data for a specific project
+- `cursor://projects/{project_name}/composers` - Get composer IDs for a specific project
+- `cursor://composers/{composer_id}` - Get data for a specific composer
+
+## Available Tools
+
+- `query_table` - Query a specific table in a project's database
+- `refresh_databases` - Refresh the list of database paths
+
+## Available Prompts
+
+- `explore_cursor_projects` - Create a prompt to explore Cursor projects
+- `analyze_chat_data` - Create a prompt to analyze chat data from a specific project
+
+# Example Usage with Claude
+
+## Listing Projects
+
+**User**: "Can you show me a list of my Cursor projects?"
+
+**Claude**: 
 ```
-GET /projects/<project_name>/composers
-```
+I'll retrieve a list of your Cursor projects.
 
-Retrieves all composer IDs and related data from a specific project.
-
-Example request:
-```bash
-curl http://localhost:5000/projects/cursor-chat-browser/composers
-```
-
-Example response:
-```json
-{
-  "composer_ids": [
-    "245ba35e-de7e-42d4-b35a-dd5ac10cdef7",
-    "193af03f-0b57-4dea-ab62-5331f98ba4cc",
-    "4de0a10c-a70e-46b7-8392-228561f714d6"
-  ],
-  "full_data": {
-    "allComposers": [
-      {
-        "type": "head",
-        "composerId": "245ba35e-de7e-42d4-b35a-dd5ac10cdef7",
-        "name": "Professional Form Layout Enhancement",
-        "lastUpdatedAt": 1741020042402,
-        "createdAt": 1741017278208,
-        "unifiedMode": "agent",
-        "forceMode": "edit"
-      },
-      ...
-    ],
-    "selectedComposerId": "193af03f-0b57-4dea-ab62-5331f98ba4cc"
-  }
-}
+Here are the Cursor projects I found:
+- project1 (path: /Users/username/Library/Application Support/Cursor/User/workspaceStorage/abc123/state.vscdb)
+- project2 (path: /Users/username/Library/Application Support/Cursor/User/workspaceStorage/def456/state.vscdb)
+- custom-project (path: /Users/username/code/custom-project/state.vscdb)
 ```
 
-#### Retrieve Composer Data from Global Storage
+## Viewing Chat History
 
+**User**: "Show me the chat history from my 'project1' project."
+
+**Claude**:
 ```
-GET /composers/<composer_id>
-```
+I'll retrieve the chat history from your 'project1' project.
 
-Retrieves detailed data for a specific composer session from the global storage database.
+Here's the chat history I found:
 
-Example request:
-```bash
-curl http://localhost:5000/composers/362d91aa-2339-4382-8173-8044ac63bca2
-```
+Chat: "Understanding React Hooks"
+- You: "Can you explain how useEffect works in React?"
+- Claude: "The useEffect hook in React is used for handling side effects in functional components..."
 
-Example response:
-```json
-{
-  "composer_id": "362d91aa-2339-4382-8173-8044ac63bca2",
-  "data": {
-    "composerId": "362d91aa-2339-4382-8173-8044ac63bca2",
-    "richText": "...",
-    "hasLoaded": true,
-    "text": "",
-    "conversation": [
-      {
-        "type": 1,
-        "bubbleId": "6fdeddb3-9707-4d25-a4a3-81e5675dd876",
-        "text": "replace this date window with just today",
-        "relevantFiles": [...]
-      },
-      {
-        "type": 2,
-        "bubbleId": "2797fa2c-c3a0-4d63-87fe-d37df7cb1dd5",
-        "text": "I'll modify the `getDefaultDateRange` function...",
-        "codeBlocks": [...]
-      }
-    ],
-    "status": "completed"
-  }
-}
+Chat: "Debugging API Connection"
+- You: "I'm getting a 401 error when connecting to the API. Here's my code..."
+- Claude: "It looks like you're missing the authorization header in your request..."
 ```
 
-#### Query a Specific Table in a Project's Database
+## Querying Database Tables
 
+**User**: "Can you search for keys related to 'settings' in the ItemTable of my 'project1' project?"
+
+**Claude**:
 ```
-GET /projects/<project_name>/tables/<table_name>
-```
+I'll search for keys related to 'settings' in the ItemTable of your 'project1' project.
 
-Queries a specific table in a project's database. The table name must be either `ItemTable` or `cursorDiskKV`.
+Here are the results:
+1. Key: "workbench.settings.editor"
+   Value: {"mode": "ui", "lastFocusedSettingId": "editor.fontSize"}
 
-Parameters:
-- `query_type`: Type of query (`get_all`, `get_by_key`, `search_keys`). Default: `get_all`
-- `key`: Key to search for when using `get_by_key` or `search_keys`
-- `limit`: Maximum number of results to return. Default: 100
+2. Key: "settings.language"
+   Value: "en"
 
-Example request:
-```bash
-curl "http://localhost:5000/projects/cursor-chat-browser/tables/ItemTable?query_type=search_keys&key=workbench"
-```
-
-Example response:
-```json
-[
-  {
-    "key": "workbench.panel.aichat.view.aichat.chatdata",
-    "value": {
-      "tabs": [...]
-    }
-  },
-  {
-    "key": "workbench.view.explorer",
-    "value": {
-      "collapsed": false
-    }
-  }
-]
+3. Key: "settings.theme"
+   Value: "dark"
 ```
 
-#### Refresh Database Paths
+## Analyzing Chat Data
 
+**User**: "Can you analyze the chat data from my 'project1' project and tell me what topics I've been discussing most frequently?"
+
+**Claude**:
 ```
-GET /refresh
-```
+I'll analyze the chat data from your 'project1' project.
 
-Refreshes the list of database paths by rescanning the Cursor directory and project directories.
+Based on your chat history, here are the most frequent topics you've been discussing:
+1. React Hooks and Components (5 conversations)
+2. API Integration (3 conversations)
+3. CSS Styling (2 conversations)
+4. Performance Optimization (2 conversations)
+5. Debugging (1 conversation)
 
-Example request:
-```bash
-curl http://localhost:5000/refresh
-```
+The most common questions were about state management in React and handling API responses.
+``` 
 
-Example response:
-```json
-{
-  "message": "Database paths refreshed",
-  "projects": {
-    "cursor-chat-browser": "/Users/username/Library/Application Support/Cursor/User/workspaceStorage/abc123/state.vscdb",
-    "cursor-db-mcp": "/Users/username/Library/Application Support/Cursor/User/workspaceStorage/def456/state.vscdb"
-  }
-}
-```
+# Architecture
 
-## Use Cases
+The server uses the Model Context Protocol (MCP) to expose Cursor's SQLite databases to AI assistants. Key components include:
 
-- **Analyzing Chat History**: Extract and analyze your AI chat conversations to understand your usage patterns.
-- **Backing Up Composer Sessions**: Save your composer sessions for future reference or backup.
-- **Data Mining**: Extract insights from your coding sessions and AI interactions.
-- **Integration with Other Tools**: Use the API to integrate Cursor data with other tools or dashboards.
+1. **Lifespan Context Management**: The server uses MCP's lifespan API to efficiently manage resources throughout the server's lifecycle.
 
-## Limitations
+2. **CursorDBManager**: Handles the detection and management of Cursor projects and their databases.
 
-- This tool is read-only and does not modify any Cursor databases.
-- The structure of Cursor's databases may change with updates to the IDE.
-- Large responses may be slow to process, especially for projects with extensive chat or composer history.
+3. **Resources**: Expose data from Cursor databases as MCP resources.
 
-## Contributing
+4. **Tools**: Provide functionality to query databases and manage projects.
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+5. **Prompts**: Define reusable templates for AI interactions.
 
-## License
+# How It Works
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+The server scans your Cursor installation directory to find project databases (state.vscdb files). It then exposes these databases through MCP resources and tools, allowing AI assistants to query and analyze the data.
+
+# License
+
+MIT 

@@ -8,14 +8,6 @@ __Claude__
 __Cursor__
 ![In Cursor GIF](./img/cursor-db-mcp-in-cursor.gif)
 
-## Features
-
-- List all Cursor projects
-- Access AI chat history from projects
-- Retrieve composer data
-- Query specific tables in Cursor's SQLite databases
-- Add custom project directories
-- Lifespan context management for efficient resource handling
 
 ## Installation
 
@@ -55,21 +47,6 @@ pip install typer rich
 ```
 
 ## Usage
-
-### Running the Server
-
-```bash
-python cursor-db-mcp-server.py
-```
-
-Optional arguments:
-- `--cursor-path`: Path to Cursor User directory (e.g. ~/Library/Application Support/Cursor/User/)
-- `--project-dirs`: List of additional Cursor project directories to scan
-
-Example:
-```bash
-python cursor-db-mcp-server.py --cursor-path ~/Library/Application\ Support/Cursor/User/ --project-dirs ~/code/project1 ~/code/project2
-```
 
 ### Testing the Server
 
@@ -131,7 +108,6 @@ Now you can ask questions about the database or retrieve info about historical c
 ![DB keys](./img/cursor-db-keys.png)
 
 
-
 ## Available Resources
 
 - `cursor://projects` - List all available Cursor projects
@@ -145,10 +121,6 @@ Now you can ask questions about the database or retrieve info about historical c
 - `query_table` - Query a specific table in a project's database
 - `refresh_databases` - Refresh the list of database paths
 
-## Available Prompts
-
-- `explore_cursor_projects` - Create a prompt to explore Cursor projects
-- `analyze_chat_data` - Create a prompt to analyze chat data from a specific project
 
 # Example Usage with Claude
 
@@ -239,6 +211,9 @@ The server uses the Model Context Protocol (MCP) to expose Cursor's SQLite datab
 # How It Works
 
 The server scans your Cursor installation directory to find project databases (state.vscdb files). It then exposes these databases through MCP resources and tools, allowing AI assistants to query and analyze the data.
+
+### Note
+Cursor stores AI conversations in different places. Increasingly, chats are stored as "composerData" under globalStorage/state.vscdb. If you don't get results when asking about chats for recent projects, try asking for composers.
 
 # Shameless Plug
 ![Cursor Journal thumbnail](./img/cursor-journal-logo_thumbnail.jpg)

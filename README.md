@@ -2,7 +2,11 @@
 
 A Model Context Protocol (MCP) server for accessing Cursor IDE's SQLite databases. This server allows AI assistants to explore and interact with Cursor's project data, chat history, and composer information.
 
-![Demo GIF](./img/cursor-db-mcp-claude.gif)
+__Claude__
+![In Claude GIF](./img/cursor-db-mcp-claude.gif)
+
+__Cursor__
+![In Cursor GIF](./img/cursor-db-mcp-in-cursor.gif)
 
 ## Features
 
@@ -121,6 +125,10 @@ Note: If Claude shows an error connecting to this MCP it's likely because it can
 ![Cursor DB MCP](./img/cursor-db-mcp.png)
 
 Now you can ask questions about the database or retrieve info about historical chats.
+
+![DB structure](./img/cursor-db-structure.png)
+
+![DB keys](./img/cursor-db-keys.png)
 
 
 

@@ -2,7 +2,7 @@
 
 A Model Context Protocol (MCP) server for accessing Cursor IDE's SQLite databases. This server allows AI assistants to explore and interact with Cursor's project data, chat history, and composer information.
 
-![Demo GIF](cursor-db-mcp-claude.gif)
+![Demo GIF](./img/cursor-db-mcp-claude.gif)
 
 ## Features
 
@@ -110,6 +110,19 @@ Note: If Claude shows an error connecting to this MCP it's likely because it can
       ]
     }
 ```
+
+### Using with Cursor IDE
+
+1. Open Cursor and navigate to Settings->Cursor Settings->MCP. 
+2. Click: Add new MCP server
+3. Name: Cursor DB MCP; Type: Command
+4. Command: \<fully qualified path to\>uv run --with mcp[cli] mcp run \<fully qualified path to\>/cursor-db-mcp-server.py 
+
+![Cursor DB MCP](./img/cursor-db-mcp.png)
+
+Now you can ask questions about the database or retrieve info about historical chats.
+
+
 
 ## Available Resources
 

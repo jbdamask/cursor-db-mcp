@@ -67,28 +67,28 @@ def main():
     print("\nInstalling basic dependencies...")
     subprocess.check_call([python_path, "-m", "pip", "install", "-r", "requirements.txt"])
     
-    # Install MCP CLI dependencies
-    print("\nInstalling MCP CLI dependencies...")
-    try:
-        # Try to install with quotes to handle square brackets
-        subprocess.check_call([python_path, "-m", "pip", "install", "mcp[cli]"])
-    except subprocess.CalledProcessError:
-        # If that fails, install the dependencies directly
-        print("Direct installation of mcp[cli] failed. Installing CLI dependencies individually...")
-        subprocess.check_call([python_path, "-m", "pip", "install", "mcp", "typer>=0.9.0", "rich>=13.0.0"])
+    # # Install MCP CLI dependencies
+    # print("\nInstalling MCP CLI dependencies...")
+    # try:
+    #     # Try to install with quotes to handle square brackets
+    #     subprocess.check_call([python_path, "-m", "pip", "install", "mcp[cli]"])
+    # except subprocess.CalledProcessError:
+    #     # If that fails, install the dependencies directly
+    #     print("Direct installation of mcp[cli] failed. Installing CLI dependencies individually...")
+    #     subprocess.check_call([python_path, "-m", "pip", "install", "mcp", "typer>=0.9.0", "rich>=13.0.0"])
     
     print("\nInstallation completed successfully!")
     
-    # Print activation instructions
-    venv_dir = "venv"
-    print(f"\nTo use the Cursor DB MCP server, you need to activate the virtual environment:")
-    if platform.system() == "Windows":
-        print(f"    {venv_dir}\\Scripts\\activate")
-    else:
-        print(f"    source {venv_dir}/bin/activate")
+    # # Print activation instructions
+    # venv_dir = "venv"
+    # print(f"\nTo use the Cursor DB MCP server, you need to activate the virtual environment:")
+    # if platform.system() == "Windows":
+    #     print(f"    {venv_dir}\\Scripts\\activate")
+    # else:
+    #     print(f"    source {venv_dir}/bin/activate")
     
-    print("\nAfter activation, you can test the MCP server with:")
-    print("    python test_mcp_server.py")
+    # print("\nAfter activation, you can test the MCP server with:")
+    # print("    python test_mcp_server.py")
 
 
 if __name__ == "__main__":

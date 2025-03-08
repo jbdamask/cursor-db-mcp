@@ -25,8 +25,7 @@ python install.py
 ```
 
 This script will install:
-- Basic MCP server dependencies
-- MCP CLI tools for testing and inspection
+- Basic MCP server and dependencies
 
 ### Manual Installation
 
@@ -53,20 +52,6 @@ pip install typer rich
 
 ## Usage
 
-### Testing the Server
-
-You can run the included test script to verify that the MCP server is working correctly:
-
-```bash
-python test_mcp_server.py
-```
-
-This script will:
-1. Start the MCP server
-2. Check if MCP CLI tools are available
-3. If available, test listing resources, tools, and prompts
-4. If not available, perform basic server tests
-5. Shut down the server
 
 ### Using with Claude Desktop
 

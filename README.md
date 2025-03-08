@@ -9,6 +9,11 @@ __Cursor__
 ![In Cursor GIF](./img/cursor-db-mcp-in-cursor.gif)
 
 
+## Prerequisites
+
+Cursor IDE
+Claude Desktop (if you want to use MCP in Claude)
+
 ## Installation
 
 ### Easy Installation

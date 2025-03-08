@@ -201,7 +201,7 @@ The server uses the Model Context Protocol (MCP) to expose Cursor's SQLite datab
 
 The server scans your Cursor installation directory to find project databases (state.vscdb files). It then exposes these databases through MCP resources and tools, allowing AI assistants to query and analyze the data.
 
-### Notes
+# Notes
 1. Cursor stores AI conversations in different places. Increasingly, chats are stored as "composerData" under globalStorage/state.vscdb. If you don't get results when asking about chats for recent projects, try asking for composers.
 2. This was written on a Mac. YMMV with other OS
 

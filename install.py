@@ -26,8 +26,8 @@ def main():
         subprocess.run([sys.executable, "-m", "pip", "install", "typer>=0.9.0", "rich>=13.0.0"])
     
     print("\nInstallation completed!")
-    print("You can now run the MCP server with: python cursor-db-mcp-server.py")
-    print("Or test it with: python test_mcp_server.py")
+    print("You can now test the MCP server with: python test_mcp_server.py")
+
 
 if __name__ == "__main__":
     main() 

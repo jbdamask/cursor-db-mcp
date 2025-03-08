@@ -205,7 +205,8 @@ The server scans your Cursor installation directory to find project databases (s
 Cursor stores AI conversations in different places. Increasingly, chats are stored as "composerData" under globalStorage/state.vscdb. If you don't get results when asking about chats for recent projects, try asking for composers.
 
 # Shameless Plug
-![Cursor Journal thumbnail](./img/cursor-journal-logo_thumbnail.jpg | width=100)
+<img src="./img/cursor-journal-logo_thumbnail.jpg" width="150" />
+
 Like this? Try [Cursor Journal](https://medium.com/@jbdamask/building-cursor-journal-with-cursor-77445026a08c) to automate writing your DevLog by creating posts directly from Cursor chat history!
 
 # License

@@ -2,8 +2,8 @@
 
 A Model Context Protocol (MCP) server for accessing Cursor IDE's SQLite databases. This server allows AI assistants to explore and interact with Cursor's project data, chat history, and composer information.
 
-__Claude__
-![In Claude GIF](./img/cursor-db-mcp-claude.gif)
+<!-- __Claude__
+![In Claude GIF](./img/cursor-db-mcp-claude.gif) -->
 
 __Cursor__
 ![In Cursor GIF](./img/cursor-db-mcp-in-cursor.gif)
@@ -12,7 +12,7 @@ __Cursor__
 ## Prerequisites
 
 Cursor IDE
-Claude Desktop (if you want to use MCP in Claude)
+<!-- Claude Desktop (if you want to use MCP in Claude) -->
 
 ## Installation
 
@@ -27,7 +27,7 @@ python install.py
 This script will install:
 - Basic MCP server and dependencies
 
-### Manual Installation
+<!-- ### Manual Installation
 
 1. Clone this repository:
 ```bash
@@ -48,10 +48,9 @@ pip install 'mcp[cli]'  # Note the quotes around mcp[cli]
 If the above command fails, you can install the CLI dependencies directly:
 ```bash
 pip install typer rich
-```
+``` -->
 
-## Usage
-
+<!-- ## Usage
 
 ### Using with Claude Desktop
 
@@ -80,9 +79,9 @@ Note: If Claude shows an error connecting to this MCP it's likely because it can
         "/Users/johndamask/code/cursor-db-mcp/cursor-db-mcp-server.py"
       ]
     }
-```
+``` -->
 
-### Using with Cursor IDE
+## Using with Cursor IDE
 
 1. Open Cursor and navigate to Settings->Cursor Settings->MCP. 
 2. Click: Add new MCP server
@@ -112,7 +111,7 @@ Now you can ask questions about the database or retrieve info about historical c
 - `refresh_databases` - Refresh the list of database paths
 
 
-# Example Usage with Claude
+<!-- # Example Usage with Claude
 
 ## Listing Projects
 
@@ -196,7 +195,7 @@ The server uses the Model Context Protocol (MCP) to expose Cursor's SQLite datab
 
 4. **Tools**: Provide functionality to query databases and manage projects.
 
-5. **Prompts**: Define reusable templates for AI interactions.
+5. **Prompts**: Define reusable templates for AI interactions. -->
 
 # How It Works
 

@@ -217,7 +217,7 @@ Cursor stores AI conversations in different places. Increasingly, chats are stor
 
 # Shameless Plug
 ![Cursor Journal thumbnail](./img/cursor-journal-logo_thumbnail.jpg)
-Like this? Try [Cursor Journal](https://medium.com/@jbdamask/building-cursor-journal-with-cursor-77445026a08c) for automating your DevLog but creating posts directly from your Cursor chat history!
+Like this? Try [Cursor Journal](https://medium.com/@jbdamask/building-cursor-journal-with-cursor-77445026a08c) to automate writing your DevLog by creating posts directly from Cursor chat history!
 
 # License
 

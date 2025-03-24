@@ -96,6 +96,27 @@ Now you can ask questions about the database or retrieve info about historical c
 
 ![DB keys](./img/cursor-db-keys.png)
 
+### Using with Claude Desktop 
+
+[Installing MCP servers for Claude Desktop](https://modelcontextprotocol.io/quickstart/user)
+
+Add this to your claude_desktop_config.json file
+```
+    "cursor-db-mcp": {
+      "command": "<fully qualified path to >/uv",
+      "args": [
+        "run",
+        "--with",
+        "mcp[cli]",
+        "mcp",
+        "run",
+        "<fully qualified path to >/cursor-db-mcp-server.py"
+      ]
+    }
+```
+
+
+![Cursor DB fuzzy search](./img/mcp-cursor-db-search.png)
 
 ## Available Resources
 

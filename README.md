@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/jbdamask-cursor-db-mcp-badge.png)](https://mseep.ai/app/jbdamask-cursor-db-mcp)
+
 # Cursor DB MCP Server
 
 A Model Context Protocol (MCP) server for accessing Cursor IDE's SQLite databases. This server allows AI assistants to explore and interact with Cursor's project data, chat history, and composer information.
